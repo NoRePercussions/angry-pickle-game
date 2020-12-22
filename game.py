@@ -1,12 +1,14 @@
 # Todo: general config
 # Todo: global setting
-# Todo: game tick cycle
-# Todo: render process
 # Todo: sounds + music
 # Todo: make graphics
 
 from entities import *
 from blocks import *
+from level import *
+import tkinter as tk
+from PIL import Image, ImageTk
+from time import sleep
 
 # Todo: keypresses are weird!
 # If using key pressed hooks:
@@ -16,18 +18,28 @@ from blocks import *
 # use `import keyboard`
 #     `if keyboard.is_pressed('b'):`
 
+# Todo: change <= to < in collision check
+# Todo: implement backwards collision checking for reflections
+# Todo: idk what this was supposed to be but probably collision related
 
-x = Entity()
-x.vel[0] = 5
-y = Entity()
-y.bounce = 1
-y.pos[0] = 70
-y.vel[0] = -5
+file = "/Users/tuckershea/Documents/testmap/testmap.json"
 
-x.entityCollision(y, 0)
-x.doEntityMove()
-y.doEntityMove()
-x.entityCollision(y, 0)
+window = tk.Tk()
+window.geometry("832x384")
 
-print(x.pos, y.pos)
-print(x.vel, y.vel)
+c = tk.Canvas(window, width=832, height=384)
+c.pack()
+
+mylevel = Level()
+mylevel.readFromJSON(file)
+
+for i in range(6):
+    mylevel.doGameTick()
+    print(mylevel.player.pos)
+    print(mylevel.levelmap)
+    mylevel.doRender(c)
+    window.update_idletasks()
+    window.update()
+    sleep(1)
+
+window.mainloop()

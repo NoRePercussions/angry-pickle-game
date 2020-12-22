@@ -5,16 +5,15 @@ from entities import *
 
 
 class Block:
-    # Todo: dict reader
-
-    def __init__(self, source=None):
+    def __init__(self, source: dict =None):
         self.frame = 0
-        self.bounds = (32, 32)
+        self.bounds = (.5, .5)
         self.images = []
-        self.collides = False
+        self.collides = True
         self.bounce = 0
 
-        if source is None: return
+        if source is None:
+            return
 
         if "bounds" in source.keys():
             self.bounds = source['bounds']
@@ -24,3 +23,6 @@ class Block:
             self.collides = source['collides']
         if "bounce" in source.keys():
             self.bounce = source['bounce']
+
+    def onCollision(self: Block, entity: Entity):
+        None
