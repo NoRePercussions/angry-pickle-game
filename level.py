@@ -63,17 +63,25 @@ class Level:
     def doGameTick(self: Level):
         self.__doEntityUpdate()
         self.__doPlayerUpdate()
+        self.__doMovements()
         self.__doEntityCollisions()
         self.__doBlockCollisions()
-        self.__doMovements()
 
     def __doEntityUpdate(self: Level):
-        for entity in self.entities:
+        rem = []
+        for index, entity in enumerate(self.entities):
             if abs(self.player.pos[0] - entity.pos[0]) < 20:
                 entity.prepareEntityMove()
+                if entity.destroyed:
+                    rem += [index]
+        self.__destroyEntities(rem)
+
+    def __destroyEntities(self: Level, indices: list):
+        for i in sorted(indices, reverse=True):
+            del self.entities[i]
 
     def __doPlayerUpdate(self: Level):
-        self.player.vel[1] -= -9.81/64
+        self.player.vel[1] -= -9.81/96
 
     def __doEntityCollisions(self: Level):
         for entity in self.entities:

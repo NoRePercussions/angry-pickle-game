@@ -13,6 +13,7 @@ class Entity:
     collides = False
     mass = 1
     bounce = 0
+    destroyed = False
 
     @staticmethod
     def staticEntityCollision(entity1: Entity, entity2: Entity) -> bool:
@@ -20,11 +21,15 @@ class Entity:
             return False
 
         for axis in range(2):
-            if not Entity.areEntitiesColliding(entity1, entity2, axis):
+            if not Entity.areEntitiesTouching(entity1, entity2, axis):
                 return False
 
         entity1.onCollision(entity2)
         entity2.onCollision(entity1)
+
+        for axis in range(2):
+            if not Entity.areEntitiesColliding(entity1, entity2, axis):
+                return False
 
         if not entity1.movable and not entity2.movable:
             return True
@@ -39,6 +44,22 @@ class Entity:
 
     @staticmethod
     def areEntitiesColliding(entity1: Entity, entity2: Entity, dim: int) -> bool:
+        if not entity1.collides or not entity2.collides:
+            return False
+
+        bound1 = (entity1.pos[dim] - entity1.bounds[dim],
+                  entity1.pos[dim] + entity1.bounds[dim])
+        bound2 = (entity2.pos[dim] - entity2.bounds[dim],
+                  entity2.pos[dim] + entity2.bounds[dim])
+
+        if bound1[1] <= bound2[0] \
+                or bound2[1] <= bound1[0]:
+            return False
+
+        return True
+
+    @staticmethod
+    def areEntitiesTouching(entity1: Entity, entity2: Entity, dim: int) -> bool:
         if not entity1.collides or not entity2.collides:
             return False
 
@@ -107,17 +128,33 @@ class Entity:
             return False
 
         for axis in range(2):
+            if not Entity.areBlockAndEntityTouching(entity, block, blockpos, axis):
+                return False
+
+        block.onCollision(entity)
+
+        for axis in range(2):
             if not Entity.areBlockAndEntityColliding(entity, block, blockpos, axis):
                 return False
 
         print(f"Colliding with a block at ({blockpos[0]}, {blockpos[1]})")
-        block.onCollision(entity)
-
         if not entity.movable:
             return True
 
+        times = []
         for axis in range(2):
-            Entity.doBlockCollisionOnAxis(entity, block, blockpos, axis)
+            t = Entity.findBlockEntityCollisionTime(entity, block, blockpos, axis)
+            if t != -1:
+                times += [(axis, t)]
+
+        collisiontime = min(times, key = lambda k: k[1])
+
+        print("oldpos", entity.pos)
+        entity.pos = [entity.pos[i] - entity.vel[i]*collisiontime[1] for i in range(2)]
+        print("newpos", entity.pos)
+
+        Entity.elasticBlockCollision(entity, block, collisiontime[0])
+        entity.vel[1 - collisiontime[0]] /= 1.5
 
         return True
 
@@ -134,11 +171,47 @@ class Entity:
         bound2 = (blockpos[dim] - block.bounds[dim],
                   blockpos[dim] + block.bounds[dim])
 
+        if bound1[1] <= bound2[0] \
+                or bound2[1] <= bound1[0]:
+            return False
+
+        return True
+
+    @staticmethod
+    def areBlockAndEntityTouching(entity: Entity, block: Block, blockpos: tuple[float, float], dim: int) -> bool:
+        if not entity.collides or not block.collides:
+            return False
+
+        bound1 = (entity.pos[dim] - entity.bounds[dim],
+                  entity.pos[dim] + entity.bounds[dim])
+        bound2 = (blockpos[dim] - block.bounds[dim],
+                  blockpos[dim] + block.bounds[dim])
+
         if bound1[1] < bound2[0] \
                 or bound2[1] < bound1[0]:
             return False
 
         return True
+
+    @staticmethod
+    def findBlockEntityCollisionTime(entity, block, blockpos, dim):
+        if entity.vel[dim] == 0:
+            return -1
+
+        bound1 = (entity.pos[dim] - entity.bounds[dim],
+                  entity.pos[dim] + entity.bounds[dim])
+        bound2 = (blockpos[dim] - block.bounds[dim],
+                  blockpos[dim] + block.bounds[dim])
+
+        t0 = (bound1[0] - bound2[1]) / entity.vel[dim]
+        t1 = (bound1[1] - bound2[0]) / entity.vel[dim]
+
+        times = [t for t in (t0, t1) if t >= 0]
+
+        if len(times) == 0:
+            return -1
+
+        return min(times)
 
     @staticmethod
     def doBlockCollisionOnAxis(entity: Entity, block: Block, blockpos: tuple[float, float], dim: int):
@@ -172,6 +245,9 @@ class Entity:
 
     def onCollision(self: Entity, otherEntity: Entity) -> None:
         None
+
+    def destroy(self):
+        self.destroyed = True
 
 
 class Player(Entity):

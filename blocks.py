@@ -25,4 +25,4 @@ class Block:
             self.bounce = source['bounce']
 
     def onCollision(self: Block, entity: Entity):
-        None
+        entity.destroy()

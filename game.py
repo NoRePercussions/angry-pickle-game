@@ -22,7 +22,7 @@ from time import sleep
 # Todo: implement backwards collision checking for reflections
 # Todo: idk what this was supposed to be but probably collision related
 
-file = "/Users/tuckershea/Documents/testmap/testmap.json"
+file = "/Users/tuckershea/Downloads/angry-pickle-game/testmap/testmap.json"
 
 window = tk.Tk()
 window.geometry("832x384")
@@ -32,14 +32,15 @@ c.pack()
 
 mylevel = Level()
 mylevel.readFromJSON(file)
+sleep(2)
 
-for i in range(6):
+for i in range(50):
     mylevel.doGameTick()
     print(mylevel.player.pos)
     print(mylevel.levelmap)
     mylevel.doRender(c)
     window.update_idletasks()
     window.update()
-    sleep(1)
+    sleep(.25)
 
 window.mainloop()
